@@ -59,6 +59,7 @@ echo "📦 Activando repositorios de terceros..."
 sudo dnf copr enable -y lihaohong/yazi
 sudo dnf copr enable -y kazeev/kew
 sudo dnf copr enable -y imput/helium
+sudo dnf copr enable -y atim/starship
 
 echo "🔐 Añadiendo repositorios para software comercial..."
 sudo dnf install -y https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
@@ -146,3 +147,83 @@ cp dotfiles/.bashrc ~/ 2>/dev/null
 
 echo "🔐 Ajustando permisos..."
 chmod -R +x ~/.config/nvim/ 2>/dev/null
+
+# ==========================================
+# FASE 4: GNOME CUSTOMIZATION
+# ==========================================
+cat << "EOF"
+   _____ _   _  ____  __  __ ______ 
+  / ____| \ | |/ __ \|  \/  |  ____|
+ | |  __|  \| | |  | | \  / | |__   
+ | | |_ | . ` | |  | | |\/| |  __|  
+ | |__| | |\  | |__| | |  | | |____ 
+  \_____|_| \_|\____/|_|  |_|______|
+EOF
+echo ""
+
+echo "🎨 Configurando PANTALLA y APARIENCIA..."
+# Activar el Modo Oscuro
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+# Recordatorio: La resolución, los 144Hz y la escala (1.25) se aplican automáticamente 
+# si copias tu archivo ~/.config/monitors.xml en tu carpeta dotfiles.
+
+echo "🔋 Configurando BATERÍA..."
+# Mostrar el porcentaje numérico en la barra
+gsettings set org.gnome.desktop.interface show-battery-percentage true
+
+echo "🔄 Configurando MULTITAREA..."
+# Mostrar solo aplicaciones del escritorio actual en el menú (Alt+Tab)
+gsettings set org.gnome.shell.app-switcher current-workspace-only true
+# Desactivar la Esquina Activa superior izquierda (hot-corner)
+gsettings set org.gnome.desktop.interface enable-hot-corners false
+
+echo "🖱️ Configurando RATÓN y TOUCHPAD..."
+# Desactivar la aceleración del ratón (Perfil 'flat')
+gsettings set org.gnome.desktop.peripherals.mouse accel-profile 'flat'
+
+echo "⚙️ Configurando TECLADO y BLOQ MAYÚS..."
+# Convertir Bloq Mayús en Escape (Shift + Bloq Mayús será el Bloq Mayús normal)
+gsettings set org.gnome.desktop.input-sources xkb-options "['caps:escape_shifted_capslock']"
+
+echo "🖥️ Configurando ESPACIOS DE TRABAJO (Estilo Tiling)..."
+# Desactivar la creación dinámica y forzar 9 escritorios fijos
+gsettings set org.gnome.mutter dynamic-workspaces false
+gsettings set org.gnome.desktop.wm.preferences num-workspaces 3
+
+echo "⌨️ Configurando ATAJOS DE TECLADO..."
+# --- 1. Atajos integrados ---
+# Cerrar ventana con Super + C (Sustituye al Alt+F4)
+gsettings set org.gnome.desktop.wm.keybindings close "['<Super>c']"
+
+# Mapear navegación de escritorios 
+for i in {1..3}; do
+    # Super + X = Ir al escritorio X
+    gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-$i "['<Super>$i']"
+    # Super + Shift + X = Mover ventana actual al escritorio X
+    gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-$i "['<Super><Shift>$i']"
+done
+
+# --- 2. Atajos de aplicaciones personalizadas ---
+# Definir los tres espacios (rutas) para nuestras aplicaciones
+gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/']"
+
+# Atajo 1: Terminal Kitty (Super + Q)
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'Terminal'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'kitty'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>q'
+
+# Atajo 2: Navegador Helium (Super + B)
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name 'Helium'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command 'helium'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding '<Super>b'
+
+# Atajo 3: Discord Flatpak (Super + D)
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ name 'Discord'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ command 'flatpak run com.discordapp.Discord'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/ binding '<Super>d'
+
+echo ""
+echo "=================================================================="
+echo "🎉 ¡MAGIA COMPLETADA! GNOME está configurado al estilo Hyprland."
+echo "⚠️  Por favor, reinicia la sesión para aplicar los cambios de teclado."
+echo "=================================================================="
