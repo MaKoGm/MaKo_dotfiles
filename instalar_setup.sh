@@ -17,7 +17,7 @@ cat << "EOF"
                              --- by MAKO ---
 EOF
 echo ""
-sleep 3
+sleep 1 
 
 # ==========================================
 # FASE 1: DEBLOAT & PRE-INSTALLATION
@@ -40,51 +40,83 @@ sudo dnf remove -y gnome-contacts gnome-weather gnome-clocks gnome-maps simple-s
 sudo dnf autoremove -y
 # Fase de limpieza completada.
 
-
 # ==========================================
 # FASE 2: CONFIGURATION & INSTALLATION
 # ==========================================
 cat << "EOF"
-   _____             __ _                       _   _             
-  / ____|           / _(_)                     | | (_)            
- | |     ___  _ __ | |_ _  __ _ _   _ _ __ __ _| |_ _  ___  _ __  
- | |    / _ \| '_ \|  _| |/ _` | | | | '__/ _` | __| |/ _ \| '_ \ 
- | |___| (_) | | | | | | | (_| | |_| | | | (_| | |_| | (_) | | | |
-  \_____\___/|_| |_|_| |_|\__, |\__,_|_|  \__,_|\__|_|\___/|_| |_|
-                           __/ |                                  
-                          |___/          
-EOF    
+  _____             __ _                       _   _             
+ / ____|           / _(_)                     | | (_)        
+| |     ___  _ __ | |_ _  __ _ _   _ _ __ __ _| |_ _  ___  _ __  
+| |    / _ \| '_ \|  _| |/ _` | | | | '__/ _` | __| |/ _ \| '_ \ 
+| |___| (_) | | | | | | | (_| | |_| | | | (_| | |_| | (_) | | | |
+ \_____\___/|_| |_|_| |_|\__, |\__,_|_|  \__,_|\__|_|\___/|_| |_|
+                          __/ |                                  
+                         |___/          
+EOF
 echo ""  
 
-# Activando repositorios de terceros para DNF
+echo "📦 Activando repositorios de terceros..."
 sudo dnf copr enable -y lihaohong/yazi
 sudo dnf copr enable -y kazeev/kew
-sudo dnf copr enable -y alxhr0/Obsidian
 sudo dnf copr enable -y imput/helium
 
-# Añadiendo el repositorio oficial de ONLYOFFICE
+echo "🔐 Añadiendo repositorios para software comercial..."
+sudo dnf install -y https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 sudo dnf install -y https://download.onlyoffice.com/repo/centos/main/noarch/onlyoffice-repo.noarch.rpm
 
-# Descargando e instalando toda la paquetería nativa
-sudo dnf install -y \
-    kitty \
-    neovim \
-    yazi \
-    eza \
-    btop \
-    fastfetch \
-    cava \
-    kew \
-    cool-retro-term \
-    gimp \
-    discord \
-    obsidian \
-    onlyoffice-desktopeditors \
-    helium-bin
+echo "🔄 Refrescando la base de datos de paquetes..."
+sudo dnf makecache
 
-# ZED se instala por su script oficial para asegurar máxima compatibilidad
+echo "🚀 Descargando e instalando paquetería nativa con DNF..."
+
+# Matriz de aplicaciones DNF (sin Obsidian)
+APPS=(
+    kitty
+    neovim
+    yazi
+    eza
+    btop
+    fastfetch
+    cava
+    kew
+    cool-retro-term
+    gimp
+    discord
+    onlyoffice-desktopeditors
+    helium-bin
+    starship
+)
+
+sudo dnf install -y --skip-unavailable "${APPS[@]}"
+
+echo "🔍 Realizando auditoría de instalación DNF..."
+FALTAN=0
+echo "----------------------------------------"
+for app in "${APPS[@]}"; do
+    if ! rpm -q "$app" &>/dev/null; then
+        echo "❌ No se pudo instalar: $app"
+        FALTAN=$((FALTAN + 1))
+    fi
+done
+echo "----------------------------------------"
+
+if [ $FALTAN -gt 0 ]; then
+    echo "⚠️  Atención: Faltaron $FALTAN paquetes nativos."
+else
+    echo "✅ Todas las aplicaciones nativas se instalaron correctamente."
+fi
+
+echo "⚡ Instalando editores de nueva generación (ZED)..."
 curl -f https://zed.dev/install.sh | sh
-# Instalación de los programas ralizada
+
+echo "📦 Instalando aplicaciones contenidas (Flatpak)..."
+# Conectamos con Flathub por si acaso no estaba activado
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+# Instalamos Obsidian en formato Flatpak de forma desatendida
+flatpak install -y flathub md.obsidian.Obsidian
+flatpak install -y flathub com.valvesoftware.Steam
+
+echo "✅ Aprovisionamiento completado."
 
 # ==========================================
 # FASE 3: POST-INSTALL & DOTFILES
@@ -96,31 +128,21 @@ cat << "EOF"
  |  ___/ _ \/ __| __|______| | | '_ \/ __| __/ _` | | |/ _` | __| |/ _ \| '_ \ 
  | |  | (_) \__ \ |_      _| |_| | | \__ \ || (_| | | | (_| | |_| | (_) | | | |
  |_|   \___/|___/\__|    |_____|_| |_|___/\__\__,_|_|_|\__,_|\__|_|\___/|_| |_|
-EOF  
+EOF
 echo ""
 
-# Nos aseguramos de que la carpeta oculta .config exista en tu home. 
+echo "📂 Preparando el terreno para tus configuraciones..."
 mkdir -p ~/.config
 
-# Copiamos las carpetas completas
-cp -r dotfiles/nvim ~/.config/
-cp -r dotfiles/kitty ~/.config/
-cp -r dotfiles/btop ~/.config/
-cp -r dotfiles/fastfetch ~/.config/
-cp -r dotfiles/kew ~/.config/
+echo "✨ Inyectando tu ADN en el sistema (Copiando Dotfiles)..."
+cp -r dotfiles/nvim ~/.config/ 2>/dev/null
+cp -r dotfiles/kitty ~/.config/ 2>/dev/null
+cp -r dotfiles/yazi ~/.config/ 2>/dev/null
+cp -r dotfiles/btop ~/.config/ 2>/dev/null
+cp -r dotfiles/fastfetch ~/.config/ 2>/dev/null
+cp -r dotfiles/kew ~/.config/ 2>/dev/null
+cp dotfiles/starship.toml ~/.config/ 2>/dev/null
+cp dotfiles/.bashrc ~/ 2>/dev/null
 
-# Copiamos los archivos sueltos
-cp dotfiles/starship.toml ~/.config/
-
-# El .bashrc va directamente a tu carpeta de usuario (~/), no dentro de .config
-cp dotfiles/.bashrc ~/
-
-# Nos aseguramos de que los scripts internos que pueda tener tu Neovim se puedan ejecutar
-chmod -R +x ~/.config/nvim/
-
-echo ""
-echo "=================================================================="
-echo "🎉 ¡BINGO! Instalación y configuración completadas con éxito."
-echo "⚠️  Por favor, reinicia el equipo para que todos los cambios se apliquen."
-echo "=================================================================="                                                                                   
-
+echo "🔐 Ajustando permisos..."
+chmod -R +x ~/.config/nvim/ 2>/dev/null
